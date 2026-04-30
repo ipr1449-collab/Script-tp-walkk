@@ -1,0 +1,179 @@
+-- Espera o jogo carregar
+if not game:IsLoaded() then game.Loaded:Wait() end
+
+local player = game.Players.LocalPlayer
+local runService = game:GetService("RunService")
+local userInput = game:GetService("UserInputService")
+
+-- Limpa versões antigas
+if game.CoreGui:FindFirstChild("SpeedJumpMenu") then
+    game.CoreGui.SpeedJumpMenu:Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "SpeedJumpMenu"
+ScreenGui.Parent = game.CoreGui
+
+-- Variáveis de controle
+local vAtivo = false
+local batendo = false
+local intensidade = 0.6 
+local aberto = false
+local puloInfinito = false
+
+-- Função para tornar arrastável
+local function fazerArrastavel(obj)
+    local dragging, dragInput, dragStart, startPos
+    obj.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = obj.Position
+        end
+    end)
+    obj.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    userInput.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            obj.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    obj.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+end
+
+-- Botão MENU
+local MenuBtn = Instance.new("TextButton")
+MenuBtn.Size = UDim2.new(0, 65, 0, 30)
+MenuBtn.Position = UDim2.new(0.1, 0, 0.35, 0)
+MenuBtn.BackgroundColor3 = Color3.new(0,0,0)
+MenuBtn.Text = "MENU"
+MenuBtn.TextColor3 = Color3.new(1,1,1)
+MenuBtn.Font = Enum.Font.SourceSansBold
+MenuBtn.Parent = ScreenGui
+Instance.new("UICorner", MenuBtn)
+fazerArrastavel(MenuBtn)
+
+-- Painel
+local Painel = Instance.new("Frame")
+Painel.Size = UDim2.new(0, 140, 0, 115)
+Painel.Position = UDim2.new(0, 0, 1.2, 0)
+Painel.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Painel.Visible = false
+Painel.Parent = MenuBtn
+Instance.new("UICorner", Painel)
+
+-- [Botoes de controle]
+local Toggle = Instance.new("TextButton")
+Toggle.Size = UDim2.new(0, 120, 0, 30)
+Toggle.Position = UDim2.new(0, 10, 0, 10)
+Toggle.Text = "VELO: OFF"
+Toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+Toggle.TextColor3 = Color3.new(1,1,1)
+Toggle.Parent = Painel
+Instance.new("UICorner", Toggle)
+
+local Menos = Instance.new("TextButton")
+Menos.Size = UDim2.new(0, 35, 0, 30)
+Menos.Position = UDim2.new(0, 10, 0, 45)
+Menos.Text = "-"
+Menos.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
+Menos.TextColor3 = Color3.new(1,1,1)
+Menos.Parent = Painel
+Instance.new("UICorner", Menos)
+
+local Mais = Instance.new("TextButton")
+Mais.Size = UDim2.new(0, 35, 0, 30)
+Mais.Position = UDim2.new(0, 95, 0, 45)
+Mais.Text = "+"
+Mais.BackgroundColor3 = Color3.fromRGB(0, 120, 0)
+Mais.TextColor3 = Color3.new(1,1,1)
+Mais.Parent = Painel
+Instance.new("UICorner", Mais)
+
+local VeloText = Instance.new("TextLabel")
+VeloText.Size = UDim2.new(0, 40, 0, 30)
+VeloText.Position = UDim2.new(0, 50, 0, 45)
+VeloText.Text = tostring(intensidade)
+VeloText.TextColor3 = Color3.new(1,1,1)
+VeloText.BackgroundTransparency = 1
+VeloText.Parent = Painel
+
+local JumpToggle = Instance.new("TextButton")
+JumpToggle.Size = UDim2.new(0, 120, 0, 25)
+JumpToggle.Position = UDim2.new(0, 10, 0, 80)
+JumpToggle.Text = "JUMP: OFF"
+JumpToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+JumpToggle.TextColor3 = Color3.new(1,1,1)
+JumpToggle.TextSize = 12
+JumpToggle.Parent = Painel
+Instance.new("UICorner", JumpToggle)
+
+-- [Lógicas]
+MenuBtn.MouseButton1Click:Connect(function()
+    aberto = not aberto
+    Painel.Visible = aberto
+end)
+Mais.MouseButton1Click:Connect(function()
+    intensidade = intensidade + 0.1
+    VeloText.Text = string.format("%.1f", intensidade)
+end)
+Menos.MouseButton1Click:Connect(function()
+    if intensidade > 0.1 then
+        intensidade = intensidade - 0.1
+        VeloText.Text = string.format("%.1f", intensidade)
+    end
+end)
+Toggle.MouseButton1Click:Connect(function()
+    vAtivo = not vAtivo
+    Toggle.Text = vAtivo and "VELO: ON" or "VELO: OFF"
+    Toggle.BackgroundColor3 = vAtivo and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(50, 50, 50)
+end)
+JumpToggle.MouseButton1Click:Connect(function()
+    puloInfinito = not puloInfinito
+    JumpToggle.Text = puloInfinito and "JUMP: ON" or "JUMP: OFF"
+    JumpToggle.BackgroundColor3 = puloInfinito and Color3.fromRGB(0, 100, 200) or Color3.fromRGB(50, 50, 50)
+end)
+
+-- [SISTEMA DE DESLIZE IGUAL AO VÍDEO]
+runService.Heartbeat:Connect(function()
+    if vAtivo then
+        local char = player.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        
+        if root and hum and hum.MoveDirection.Magnitude > 0 then
+            -- Aplica a velocidade de TP direto, ignorando se o boneco está em pé ou caído
+            -- Para evitar o "peso", o CFrame ignora a fricção do chão
+            root.CFrame = root.CFrame + (hum.MoveDirection * intensidade)
+        end
+    end
+end)
+
+-- [Infinite Jump]
+userInput.JumpRequest:Connect(function()
+    if puloInfinito then
+        local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+
+-- [Detector de Ataque]
+local function monitorar(char)
+    char:WaitForChild("Humanoid").AnimationPlayed:Connect(function(anim)
+        if anim.Priority == Enum.AnimationPriority.Action then
+            batendo = true
+            task.wait(0.7)
+            batendo = false
+        end
+    end)
+end
+if player.Character then monitorar(player.Character) end
+player.CharacterAdded:Connect(monitorar)
