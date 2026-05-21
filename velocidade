@@ -1,0 +1,120 @@
+local ativo = true
+local velocidade = 2
+
+-- GUI
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local Toggle = Instance.new("TextButton")
+local Mais = Instance.new("TextButton")
+local Menos = Instance.new("TextButton")
+
+ScreenGui.Parent = game.CoreGui
+Frame.Parent = ScreenGui
+
+Frame.Size = UDim2.new(0, 140, 0, 90)
+Frame.Position = UDim2.new(0, 20, 0, 100)
+Frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+
+-- DRAG UNIVERSAL (MOUSE + TOQUE)
+local UIS = game:GetService("UserInputService")
+
+local dragging = false
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    Frame.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+Frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 
+    or input.UserInputType == Enum.UserInputType.Touch then
+        
+        dragging = true
+        dragStart = input.Position
+        startPos = Frame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+Frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement 
+    or input.UserInputType == Enum.UserInputType.Touch then
+        if dragging then
+            update(input)
+        end
+    end
+end)
+
+-- botão ON/OFF
+Toggle.Parent = Frame
+Toggle.Size = UDim2.new(1, 0, 0, 30)
+Toggle.Text = "ANIM: ON"
+
+-- botão +
+Mais.Parent = Frame
+Mais.Position = UDim2.new(0, 0, 0, 30)
+Mais.Size = UDim2.new(0.5, 0, 0, 30)
+Mais.Text = "+"
+
+-- botão -
+Menos.Parent = Frame
+Menos.Position = UDim2.new(0.5, 0, 0, 30)
+Menos.Size = UDim2.new(0.5, 0, 0, 30)
+Menos.Text = "-"
+
+-- texto
+local Label = Instance.new("TextLabel")
+Label.Parent = Frame
+Label.Position = UDim2.new(0, 0, 0, 60)
+Label.Size = UDim2.new(1, 0, 0, 30)
+Label.Text = "Speed: "..velocidade
+Label.BackgroundTransparency = 1
+Label.TextColor3 = Color3.new(1,1,1)
+
+-- funções
+Toggle.MouseButton1Click:Connect(function()
+    ativo = not ativo
+    Toggle.Text = ativo and "ANIM: ON" or "ANIM: OFF"
+end)
+
+Mais.MouseButton1Click:Connect(function()
+    velocidade += 0.5
+    Label.Text = "Speed: "..velocidade
+end)
+
+Menos.MouseButton1Click:Connect(function()
+    velocidade = math.max(0.5, velocidade - 0.5)
+    Label.Text = "Speed: "..velocidade
+end)
+
+-- animação
+local function aplicar()
+    local player = game.Players.LocalPlayer
+    local char = player.Character
+    
+    if char and char:FindFirstChild("Humanoid") then
+        for _,track in pairs(char.Humanoid:GetPlayingAnimationTracks()) do
+            pcall(function()
+                track:AdjustSpeed(velocidade)
+            end)
+        end
+    end
+end
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if ativo then
+        aplicar()
+    end
+end)
