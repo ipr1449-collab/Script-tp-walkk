@@ -1,4 +1,4 @@
-local ativo = true
+local ativo = true   P
 local velocidade = 2
 
 -- GUI
